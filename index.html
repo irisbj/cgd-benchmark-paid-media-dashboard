@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Benchmark Paid Media - Banca PT | CGD</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <img src="assets/logo-cgd.png" alt="Caixa Geral de Depositos" class="site-header__logo" />
+      <div class="site-header__titles">
+        <h1>Benchmark Paid Media &mdash; Banca PT</h1>
+        <p class="site-header__subtitle">
+          Monitorizacao semanal de anuncios ativos dos principais bancos portugueses em Meta, Google, TikTok e LinkedIn.
+        </p>
+      </div>
+      <div class="site-header__meta">
+        <span class="pill" id="lastUpdated">Ultima atualizacao: -</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="filters card" aria-label="Filtros">
+      <div class="filters__group">
+        <label>Bancos</label>
+        <div class="chip-group" id="filterBanks"></div>
+      </div>
+      <div class="filters__group">
+        <label>Plataformas</label>
+        <div class="chip-group" id="filterPlatforms"></div>
+      </div>
+      <div class="filters__group">
+        <label>Categorias</label>
+        <div class="chip-group" id="filterCategories"></div>
+      </div>
+      <div class="filters__group filters__group--dates">
+        <label>Periodo (primeira aparicao)</label>
+        <div class="chip-group chip-group--presets" id="datePresets" role="tablist">
+          <button class="chip chip--preset" data-preset="7" type="button" aria-pressed="false">7 dias</button>
+          <button class="chip chip--preset" data-preset="30" type="button" aria-pressed="true">30 dias</button>
+          <button class="chip chip--preset" data-preset="90" type="button" aria-pressed="false">90 dias</button>
+          <button class="chip chip--preset" data-preset="all" type="button" aria-pressed="false">Todos</button>
+          <button class="chip chip--preset" data-preset="custom" type="button" aria-pressed="false">Personalizado</button>
+        </div>
+        <div class="date-inputs" id="dateCustom" hidden>
+          <input type="date" id="filterFrom" />
+          <span>&rarr;</span>
+          <input type="date" id="filterTo" />
+        </div>
+      </div>
+      <div class="filters__group filters__group--actions">
+        <button id="btnReset" class="btn btn--ghost">Repor</button>
+        <button id="btnActiveOnly" class="btn btn--primary" aria-pressed="true">So ativos</button>
+      </div>
+    </section>
+
+    <section class="kpis" aria-label="Indicadores">
+      <div class="kpi-card">
+        <span class="kpi-card__label">Anuncios ativos</span>
+        <span class="kpi-card__value" id="kpiActive">-</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label">Novos (7 dias)</span>
+        <span class="kpi-card__value" id="kpiNew">-</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label">Alcance UE estimado</span>
+        <span class="kpi-card__value" id="kpiReach">-</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label">Top plataforma</span>
+        <span class="kpi-card__value" id="kpiPlatform">-</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-card__label">Top categoria</span>
+        <span class="kpi-card__value" id="kpiCategory">-</span>
+      </div>
+      <div class="kpi-card kpi-card--highlight">
+        <span class="kpi-card__label">Share of Voice CGD</span>
+        <span class="kpi-card__value" id="kpiSov">-</span>
+      </div>
+    </section>
+
+    <section class="grid grid--2">
+      <div class="card">
+        <h2>Anuncios ativos por banco</h2>
+        <div class="chart-box"><canvas id="chartByBank"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Mix de plataformas por banco</h2>
+        <div class="chart-box"><canvas id="chartByPlatform"></canvas></div>
+      </div>
+    </section>
+
+    <section class="grid grid--2">
+      <div class="card">
+        <h2>Mix de categorias por banco</h2>
+        <div class="chart-box"><canvas id="chartByCategory"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Novos anuncios por semana (ultimas 12)</h2>
+        <div class="chart-box"><canvas id="chartTimeline"></canvas></div>
+      </div>
+    </section>
+
+    <section class="grid grid--2">
+      <div class="card">
+        <h2>Alcance estimado por banco</h2>
+        <p class="hint" id="reachHint">Soma dos pontos medios dos ranges declarados pelos ad libraries. <strong>Nota Google:</strong> por politica DSA, o alcance de cada ad so e divulgado ~90 dias apos a data de estreia. Ads Google recentes aparecem como "-" (dado ainda por revelar) e nao contam para esta soma.</p>
+        <div class="chart-box"><canvas id="chartReach"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Mix de formatos</h2>
+        <div class="chart-box"><canvas id="chartFormat"></canvas></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Criativos recentes</h2>
+      <p class="hint">Os 12 anuncios mais recentes, ordenados por primeira aparicao. Clique numa imagem para abrir o anuncio no ad library original.</p>
+      <div class="gallery" id="gallery"></div>
+    </section>
+
+    <section class="card">
+      <div class="table-toolbar">
+        <h2>Anuncios em detalhe</h2>
+        <input type="search" id="tableSearch" placeholder="Pesquisar por texto, banco, categoria..." />
+      </div>
+      <div class="table-wrap">
+        <table id="adsTable">
+          <thead>
+            <tr>
+              <th data-sort="bank">Banco</th>
+              <th data-sort="platform">Plataforma</th>
+              <th data-sort="category">Categoria</th>
+              <th data-sort="format">Formato</th>
+              <th>Texto</th>
+              <th data-sort="first_seen">Primeira aparicao</th>
+              <th data-sort="last_seen">Ultima aparicao</th>
+              <th data-sort="reach_mid">Alcance UE (mid)</th>
+              <th>Ativo</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody id="adsTableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <span id="tableCount">0 anuncios</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>
+        Fontes: Meta Ad Library, Google Ads Transparency Center, TikTok Commercial Content Library,
+        LinkedIn Ad Library (repositorios publicos DSA). Alcance representado por pontos medios de ranges declarados.
+        Dashboard interno CGD &mdash; Direcao de Negocio Digital.
+      </p>
+    </div>
+  </footer>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
